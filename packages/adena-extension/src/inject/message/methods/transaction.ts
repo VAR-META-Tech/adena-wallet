@@ -100,7 +100,7 @@ export const validateInjectionAddress = (currentAccountAddress: string): boolean
 };
 
 export const validateInjectionTransactionType = (requestData: InjectionMessage): any => {
-  const messageTypes = ['/bank.MsgSend', '/vm.m_call', '/vm.m_addpkg', '/vm.m_run'];
+  const messageTypes = ['/bank.MsgSend', '/vm.m_call', '/vm.m_addpkg', '/vm.m_run', '/vm.m_noop'];
   return requestData.data?.messages.every((message: any) => messageTypes.includes(message?.type));
 };
 
@@ -130,6 +130,11 @@ export const validateInjectionTransactionMessage = (
         if (currentAccountAddress !== message.value.caller) {
           return false;
         }
+        break;
+      case '/vm.m_noop':
+        // if (currentAccountAddress !== message.value.caller) {
+        //   return false;
+        // }
         break;
       default:
         break;

@@ -4,6 +4,7 @@ import {
   HistoryItemBankMsgSend,
   HistoryItemVmMAddPkg,
   HistoryItemVmMCall,
+  HistoryItemVmMNoop,
   TransactionHistoryResponse,
 } from '../response/transaction-history-response';
 
@@ -55,6 +56,10 @@ function isHistoryItemVmMAddPkg(historyItem: HistoryItem): historyItem is Histor
 
 function isVmAddPkgType(func?: string): boolean {
   return func === 'AddPkg';
+}
+
+function isHistoryItemVmMNoop(historyItem: HistoryItem): historyItem is HistoryItemVmMNoop {
+  return historyItem.type === '/vm.m_noop';
 }
 
 export class TransactionHistoryMapper {
@@ -123,6 +128,9 @@ export class TransactionHistoryMapper {
     }
     if (isHistoryItemVmMAddPkg(historyItem)) {
       return TransactionHistoryMapper.mappedHistoryItemVmMAddPkg(historyItem);
+    }
+    if (isHistoryItemVmMNoop(historyItem)) {
+      return TransactionHistoryMapper.mappedHistoryItemVmMNoop(historyItem);
     }
     return TransactionHistoryMapper.mappedHistoryItemDefault(historyItem);
   }
@@ -194,6 +202,29 @@ export class TransactionHistoryMapper {
       logo: '',
       type: 'CONTRACT_CALL',
       typeName: 'Contract Interaction',
+      status: result.status === 'Success' ? 'SUCCESS' : 'FAIL',
+      title: func ?? '',
+      amount: {
+        value: `${transfer.amount || '0'}`,
+        denom: transfer.denom || 'GNOT',
+      },
+      valueType,
+      date: dateToLocal(date).value,
+      networkFee: {
+        value: `${fee.amount || '0'}`,
+        denom: `${fee.denom}`,
+      },
+    };
+  }
+
+  private static mappedHistoryItemVmMNoop(historyItem: HistoryItemVmMNoop): TransactionInfo {
+    const { hash, result, func, transfer, date, fee } = historyItem;
+    const valueType = result.status === 'Fail' ? 'BLUR' : func === 'Receive' ? 'ACTIVE' : 'DEFAULT';
+    return {
+      hash,
+      logo: '',
+      type: 'CONTRACT_CALL',
+      typeName: 'Sponsor Interaction',
       status: result.status === 'Success' ? 'SUCCESS' : 'FAIL',
       title: func ?? '',
       amount: {

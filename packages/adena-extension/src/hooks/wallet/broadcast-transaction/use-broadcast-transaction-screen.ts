@@ -6,6 +6,7 @@ import {
   RawVmCallMessage,
   RawVmAddPackageMessage,
   RawVmRunMessage,
+  RawVmNoopMessage
 } from 'adena-module';
 import { MsgEndpoint } from '@gnolang/gno-js-client';
 import { Tx } from '@gnolang/tm2-js-client';
@@ -50,6 +51,8 @@ function makeTypeName(rawTx: RawTx): string {
       return 'Add Package';
     case MsgEndpoint.MSG_RUN:
       return 'Run Transaction';
+    case MsgEndpoint.MSG_NOOP:
+      return 'Sponsor Transaction';
     default:
       return 'Contract Interaction';
   }
@@ -99,6 +102,18 @@ function mapVmAddPackageTransactionInfo(rawTx: RawTx): TransactionDisplayInfo[] 
   ];
 }
 
+function mapVmNoopTransactionInfo(rawTx: RawTx): TransactionDisplayInfo[] {
+  const message = rawTx.msg[0] as any;
+  const networkFee = makeGnotAmountByRaw(rawTx.fee.gas_fee);
+  const networkFeeStr = `${networkFee?.value} ${networkFee?.denom}`;
+  const extraInfo = rawTx.msg.length > 1 ? `${rawTx.msg.length}` : '';
+
+  return [
+    makeTransactionInfo('Type', makeTypeName(rawTx), 'TEXT', extraInfo),
+    makeTransactionInfo('Network Fee', networkFeeStr),
+  ];
+}
+
 function mapTransactionInfo(rawTx: RawTx): TransactionDisplayInfo[] {
   const messages = rawTx.msg;
   if (messages[0]['@type'] === MsgEndpoint.MSG_SEND) {
@@ -109,6 +124,9 @@ function mapTransactionInfo(rawTx: RawTx): TransactionDisplayInfo[] {
   }
   if (messages[0]['@type'] === MsgEndpoint.MSG_CALL) {
     return mapVmCallTransactionInfo(rawTx);
+  }
+  if (messages[0]['@type'] === MsgEndpoint.MSG_NOOP) {
+    return mapVmNoopTransactionInfo(rawTx);
   }
   return mapVmCallTransactionInfo(rawTx);
 }
@@ -140,6 +158,13 @@ function matchTransactionCaller(rawTx: RawTx, caller: string): boolean {
       }
       case MsgEndpoint.MSG_RUN: {
         const current = message as RawVmRunMessage;
+        if (!current?.caller) {
+          return true;
+        }
+        return current.caller !== caller;
+      }
+      case MsgEndpoint.MSG_NOOP: {
+        const current = message as RawVmNoopMessage;
         if (!current?.caller) {
           return true;
         }
