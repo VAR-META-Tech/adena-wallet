@@ -86,7 +86,7 @@ export const decodeTxMessages = (messages: Any[]): any[] => {
           ...messageJson,
         };
       }
-      case MsgEndpoint.MSG_NOOP: {
+      case "/vm.m_noop": {
         const decodedMessage = MsgNoop.decode(m.value);
         const messageJson = MsgNoop.toJSON(decodedMessage) as object;
         return {
@@ -163,13 +163,13 @@ function encodeMessageValue(message: { type: string; value: any }) {
         value: MsgRun.encode(msgRun).finish(),
       });
     }
-    case MsgEndpoint.MSG_NOOP: {
+    case "/vm.m_noop": {
       const value = message.value;
       const msgNoop = MsgNoop.create({
         caller: value.caller
       });
       return Any.create({
-        typeUrl: MsgEndpoint.MSG_NOOP,
+        typeUrl: "/vm.m_noop",
         value: MsgNoop.encode(msgNoop).finish(),
       });
     }
