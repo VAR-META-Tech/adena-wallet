@@ -1,8 +1,7 @@
-import { Any, PubKeySecp256k1, Tx, TxFee, TxSignature } from '@gnolang/tm2-js-client';
-import { MsgCall, MsgAddPackage, MsgSend, MsgEndpoint } from '@gnolang/gno-js-client';
-import { MemPackage, MemFile, MsgRun } from '@gnolang/gno-js-client/bin/proto/gno/vm';
+import { Any, PubKeySecp256k1, Tx, TxFee, TxSignature } from '@gnolang/tm2-js-client-legacy';
+import { MsgCall, MsgAddPackage, MsgSend, MsgEndpoint } from '@gnolang/gno-js-client-legacy';
+import { MemPackage, MemFile, MsgRun } from '@gnolang/gno-js-client-legacy/bin/proto/gno/vm';
 import { fromBase64 } from '../encoding';
-import _m0 from 'protobufjs/minimal';
 
 export interface Document {
   chain_id: string;
@@ -23,32 +22,6 @@ export interface Document {
   }[];
   memo: string;
 }
-
-/**
- * MsgCall is the method invocation tx message,
- * denoted as "m_call"
- */
-export interface MsgNoop {
-  /** the bech32 address of the caller */
-  caller: string;
-}
-
-export declare const MsgNoop: {
-  encode(message: MsgCall, writer?: _m0.Writer): _m0.Writer;
-  decode(input: _m0.Reader | Uint8Array, length?: number): MsgCall;
-  fromJSON(object: any): MsgCall;
-  toJSON(message: MsgCall): unknown;
-  create<I extends {
-      caller?: string | undefined;
-  } & {
-      caller?: string | undefined;
-  } & { [K_1 in Exclude<keyof I, keyof MsgCall>]: never; }>(base?: I): MsgCall;
-  fromPartial<I_1 extends {
-      caller?: string | undefined;
-  } & {
-      caller?: string | undefined;
-  } & { [K_3 in Exclude<keyof I_1, keyof MsgCall>]: never; }>(object: I_1): MsgCall;
-};
 
 export const decodeTxMessages = (messages: Any[]): any[] => {
   return messages.map((m: Any) => {
@@ -86,14 +59,6 @@ export const decodeTxMessages = (messages: Any[]): any[] => {
           ...messageJson,
         };
       }
-      case MsgEndpoint.MSG_NOOP: {
-        const decodedMessage = MsgNoop.decode(m.value);
-        const messageJson = MsgNoop.toJSON(decodedMessage) as object;
-        return {
-          '@type': m.typeUrl,
-          ...messageJson,
-        };
-      }
       default:
         throw new Error(`unsupported message type ${m.typeUrl}`);
     }
@@ -102,12 +67,12 @@ export const decodeTxMessages = (messages: Any[]): any[] => {
 
 function createMemPackage(memPackage: RawMemPackage) {
   return MemPackage.create({
-    name: memPackage.name,
-    path: memPackage.path,
-    files: memPackage.files.map((file: any) =>
+    name: memPackage.Name,
+    path: memPackage.Path,
+    files: memPackage.Files.map((file: any) =>
       MemFile.create({
-        name: file.name,
-        body: file.body,
+        name: file.Name,
+        body: file.Body,
       }),
     ),
   });
@@ -163,16 +128,6 @@ function encodeMessageValue(message: { type: string; value: any }) {
         value: MsgRun.encode(msgRun).finish(),
       });
     }
-    case MsgEndpoint.MSG_NOOP: {
-      const value = message.value;
-      const msgNoop = MsgNoop.create({
-        caller: value.caller
-      });
-      return Any.create({
-        typeUrl: MsgEndpoint.MSG_NOOP,
-        value: MsgNoop.encode(msgNoop).finish(),
-      });
-    }
     default: {
       return Any.create({
         typeUrl: MsgEndpoint.MSG_CALL,
@@ -221,36 +176,44 @@ export interface RawVmAddPackageMessage {
   '@type': string;
   creator: string;
   deposit: string;
-  package: RawMemPackage;
+  package: {
+    Name: string;
+    Path: string;
+    Files: {
+      Name: string;
+      Body: string;
+    }[];
+  };
 }
 
 export interface RawVmRunMessage {
   '@type': string;
   caller: string;
   send: string;
-  package: RawMemPackage;
+  package: {
+    Name: string;
+    Path: string;
+    Files: {
+      Name: string;
+      Body: string;
+    }[];
+  };
 }
 
 export interface RawMemPackage {
-  name: string;
-  path: string;
-  files: {
-    name: string;
-    body: string;
+  Name: string;
+  Path: string;
+  Files: {
+    Name: string;
+    Body: string;
   }[];
-}
-
-export interface RawVmNoopMessage {
-  '@type': string;
-  caller: string;
 }
 
 export type RawTxMessageType =
   | RawBankSendMessage
   | RawVmCallMessage
   | RawVmAddPackageMessage
-  | RawVmRunMessage
-  | RawVmNoopMessage;
+  | RawVmRunMessage;
 
 export interface RawTx {
   msg: RawTxMessageType[];

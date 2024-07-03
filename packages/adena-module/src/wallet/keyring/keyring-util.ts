@@ -1,13 +1,16 @@
-import { Any, MsgAddPackage, MsgCall, MsgSend } from '@gnolang/gno-js-client';
 import { AddressKeyring } from './address-keyring';
 import { HDWalletKeyring } from './hd-wallet-keyring';
 import { Keyring } from './keyring';
 import { LedgerKeyring } from './ledger-keyring';
 import { PrivateKeyKeyring } from './private-key-keyring';
 import { Web3AuthKeyring } from './web3-auth-keyring';
-import { Document } from './../..';
-import { Wallet as Tm2Wallet } from '@gnolang/tm2-js-client';
+import { Tx, Wallet as Tm2Wallet } from '@gnolang/tm2-js-client';
 import { Wallet as Tm2WalletLegacy } from '@gnolang/tm2-js-client-legacy';
+import { Document, documentToTx, decodeTxMessages } from './../../utils/messages';
+import {
+  documentToTx as documentToTxLegacy,
+  decodeTxMessages as decodeTxMessagesLegacy,
+} from './../../utils/messages-legacy';
 
 const LEGACY_NETWORKS = ['test3'];
 
@@ -51,4 +54,12 @@ export function useTm2Wallet(document: Document): typeof Tm2Wallet | typeof Tm2W
     return Tm2WalletLegacy;
   }
   return Tm2Wallet;
+}
+
+export function makeSignedTx(wallet: Tm2Wallet | Tm2WalletLegacy, document: Document): Promise<Tx> {
+  const isLegacy = LEGACY_NETWORKS.includes(document.chain_id);
+  const tx = isLegacy ? documentToTxLegacy(document) : documentToTx(document);
+  const decodeTxMessageFunction = isLegacy ? decodeTxMessagesLegacy : decodeTxMessages;
+
+  return wallet.signTransaction(tx, decodeTxMessageFunction);
 }

@@ -96,8 +96,8 @@ function mapVmAddPackageTransactionInfo(rawTx: RawTx): TransactionDisplayInfo[] 
 
   return [
     makeTransactionInfo('Type', makeTypeName(rawTx), 'TEXT', extraInfo),
-    makeTransactionInfo('Path', message.package.Path),
-    makeTransactionInfo('Name', message.package.Name),
+    makeTransactionInfo('Path', message.package?.path || message.package?.Path),
+    makeTransactionInfo('Name', message.package?.name || message.package?.Name),
     makeTransactionInfo('Network Fee', networkFeeStr),
   ];
 }
@@ -192,9 +192,8 @@ const useBroadcastTransactionScreen = (): UseBroadcastTransactionScreenReturn =>
   const { transactionService } = useAdenaContext();
   const { currentAccount, currentAddress } = useCurrentAccount();
   const { navigate } = useAppNavigate();
-  const [broadcastTransactionState, setBroadcastTransactionState] = useState<
-    BroadcastTransactionState
-  >('UPLOAD_TRANSACTION');
+  const [broadcastTransactionState, setBroadcastTransactionState] =
+    useState<BroadcastTransactionState>('UPLOAD_TRANSACTION');
   const [transaction, setTransaction] = useState<Tx | null>(null);
   const [rawTransaction, setRawTransaction] = useState<RawTx | null>(null);
 
